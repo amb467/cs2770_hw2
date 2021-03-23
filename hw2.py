@@ -120,6 +120,9 @@ def part_B(learning_rate, batch_size, optimizer):
 			else:
 				model.eval()
 
+			all_batchs_loss = 0
+			all_batchs_corrects = 0
+			
 			for inputs, labels in dataloaders[phase]:
 				inputs = inputs.to(device)
 				labels = labels.to(device)
@@ -141,13 +144,13 @@ def part_B(learning_rate, batch_size, optimizer):
 				if phase == 'train':
 					scheduler.step()
 			
-				epoch_loss = all_batchs_loss / dataset_sizes[phase]
-				epoch_acc = all_batchs_corrects.double() / dataset_sizes[phase]
+			epoch_loss = all_batchs_loss / dataset_sizes[phase]
+			epoch_acc = all_batchs_corrects.double() / dataset_sizes[phase]
 		
-				if phase == 'val' and epoch_acc > best_acc:
-					best_acc = epoch_acc
-					best_model_wts = copy.deepcopy(model.state_dict())
-					torch.save(best_model_wts , 'best_model_weight.pth')
+			if phase == 'val' and epoch_acc > best_acc:
+				best_acc = epoch_acc
+				best_model_wts = copy.deepcopy(model.state_dict())
+				torch.save(best_model_wts , 'best_model_weight.pth')
 				
 	print('Part B: Testing CNN')
 	model = models.vgg16()
