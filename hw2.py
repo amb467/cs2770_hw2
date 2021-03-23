@@ -18,6 +18,7 @@ from sklearn.metrics import confusion_matrix
 parser = argparse.ArgumentParser(description='CS2770 HW2')
 parser.add_argument('--parts', type=str, default='A,B', help='A comma-delimited list of the homework parts to process')
 parser.add_argument('--data_dir', type=pathlib.Path, help='The data set to use for training, testing, and validation')
+parser.add_argument('--output', nargs='?', type=argparse.FileType('w'), default=s'-', help='The output file where results will go')
 args = parser.parse_args()
 parts = args.parts.split(',')
 
@@ -43,7 +44,6 @@ data_transforms = {
 }
 
 image_datasets = {x: datasets.ImageFolder(os.path.join(args.data_dir, x), data_transforms[x]) for x in ['train', 'val', 'test']}
-dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=8, shuffle=True, num_workers=4) for x in ['train', 'val' , 'test']}
 dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val', 'test']}
 class_names = image_datasets['train'].classes
 
@@ -63,6 +63,8 @@ class VGG16_Feature_Extraction(torch.nn.Module):
 		return x
 
 def part_A():
+
+	dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=8, shuffle=True, num_workers=4) for x in ['train', 'val' , 'test']}
 
 	model = VGG16_Feature_Extraction()
 	model = model.to(device)
@@ -93,6 +95,8 @@ def part_A():
 	
 def part_B(learning_rate, batch_size, optimizer):
 
+	dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=4) for x in ['train', 'val' , 'test']}
+
 	model = models.vgg16(pretrained=True)
 	model = model.to(device)
 
@@ -100,16 +104,9 @@ def part_B(learning_rate, batch_size, optimizer):
 	num_ftrs = model.classifier[6].in_features
 	model.classifier[6] = nn.Linear(num_ftrs, len(class_names))
 
-	print("Model Parameters:")
-	for param in model.parameters():
-		print(param)
-	
-	return None,None
-	
-	"""
 	num_epochs = 25
 	criterion = nn.CrossEntropyLoss()
-	optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+	optimizer = optimizer(model.parameters(), lr=learning_rate, momentum=0.9)
 	scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
 	best_model_wts = copy.deepcopy(model.state_dict())
@@ -172,12 +169,12 @@ def part_B(learning_rate, batch_size, optimizer):
 		y_pred = np.concatenate((y_pred, preds.to('cpu')), axis=0)	
 		
 	return y_true, y_pred
-	"""
 
 def print_results(part, y_true, y_pred):
-	print(f"{part} Accuracy Score: {accuracy_score(y_true, y_pred)}")
-	print(f"{part} Confusion Matrix")
-	confusion_matrix(y_true, y_pred)
+	args.output.write(f"{part} Accuracy Score: {accuracy_score(y_true, y_pred)}")
+	args.output.write(f"{part} Confusion Matrix")
+	args.output.write(confusion_matrix(y_true, y_pred))
+	
 
 if 'A' in parts:
 	print('Part A')
@@ -187,8 +184,8 @@ if 'A' in parts:
 if 'B' in parts:
 
 	for learning_rate in [0.001]:
-		for batch_size in [1]:
-			for optimizer in [1]:
+		for batch_size in [8]:
+			for optimizer in [optim.SGD]:
 				part = f'Part B - learning rate {learning_rate}, batch_size {batch_size}, optimizer {optimizer}'
 				y_true, y_pred = part_B(learning_rate, batch_size, optimizer)
 				#print_results(part, y_true, y_pred)
