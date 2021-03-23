@@ -100,7 +100,11 @@ def part_B(learning_rate, batch_size, optimizer):
 	num_ftrs = model.classifier[6].in_features
 	model.classifier[6] = nn.Linear(num_ftrs, len(class_names))
 
-	print(model.parameters())
+	print("Model Parameters:")
+	for param in model.parameters():
+		print(param)
+	
+	return None,None
 	
 	"""
 	num_epochs = 25
