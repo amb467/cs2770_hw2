@@ -127,6 +127,7 @@ def part_B(learning_rate, batch_size, optimizer):
 				optimizer.zero_grad()
 		
 				with torch.set_grad_enabled(phase == 'train'):
+					inputs - inputs.to('cuda:0')
 					outputs = model(inputs)
 					_, preds = torch.max(outputs, 1)
 					loss = criterion(outputs, labels)
