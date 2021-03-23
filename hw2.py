@@ -191,7 +191,7 @@ if 'B' in parts:
 		for batch_size in [16, 8]:
 			for optimizer in ['Adam', 'SGD']:
 			
-				optimizers: {
+				optimizers = {
 					'SGD': lambda params: optim.SGD(params, lr=learning_rate, momentum=0.9),
 					'Adam': lambda params: optim.Adam(params, lr=learning_rate)
 				}
