@@ -124,20 +124,20 @@ def part_B(learning_rate, batch_size, optimizer):
 				inputs = inputs.to(device)
 				labels = labels.to(device)
 
-			optimizer.zero_grad()
+				optimizer.zero_grad()
 		
-			with torch.set_grad_enabled(phase == 'train'):
-				outputs = model(inputs)
-				_, preds = torch.max(outputs, 1)
-				loss = criterion(outputs, labels)
+				with torch.set_grad_enabled(phase == 'train'):
+					outputs = model(inputs)
+					_, preds = torch.max(outputs, 1)
+					loss = criterion(outputs, labels)
+					if phase == 'train':
+						loss.backward()
+						optimizer.step()
+				all_batchs_loss += loss.item() * inputs.size(0)
+				all_batchs_corrects += torch.sum(preds == labels.data)
+		
 				if phase == 'train':
-					loss.backward()
-					optimizer.step()
-			all_batchs_loss += loss.item() * inputs.size(0)
-			all_batchs_corrects += torch.sum(preds == labels.data)
-		
-			if phase == 'train':
-				scheduler.step()
+					scheduler.step()
 			
 			epoch_loss = all_batchs_loss / dataset_sizes[phase]
 			epoch_acc = all_batchs_corrects.double() / dataset_sizes[phase]
