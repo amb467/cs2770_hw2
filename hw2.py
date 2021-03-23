@@ -188,9 +188,9 @@ if 'A' in parts:
 
 if 'B' in parts:
 
-	for learning_rate in [0.001]:
-		for batch_size in [8]:
-			for optimizer in [optim.SGD]:
+	for learning_rate in [0.0001, 0.001]:
+		for batch_size in [16, 8]:
+			for optimizer in [optim.Adam, optim.SGD]:
 				part = f'Part B - learning rate {learning_rate}, batch_size {batch_size}, optimizer {optimizer}'
 				y_true, y_pred = part_B(learning_rate, batch_size, optimizer)
 				#print_results(part, y_true, y_pred)
