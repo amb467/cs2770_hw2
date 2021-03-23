@@ -93,7 +93,7 @@ def part_A():
 
 	return image_labels['test'], clf.predict(image_features['test'])
 	
-def part_B(learning_rate, batch_size, optimizer):
+def part_B(batch_size, optimizer):
 
 	dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=4) for x in ['train', 'val' , 'test']}
 
@@ -106,7 +106,7 @@ def part_B(learning_rate, batch_size, optimizer):
 
 	num_epochs = 25
 	criterion = nn.CrossEntropyLoss()
-	optimizer = optimizer(model.parameters(), lr=learning_rate, momentum=0.9)
+	optimizer = optimizer(model.parameters())
 	scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
 	best_model_wts = copy.deepcopy(model.state_dict())
@@ -180,7 +180,6 @@ def print_results(part, y_true, y_pred):
 	args.output.write(f"{part} Confusion Matrix")
 	args.output.write(confusion_matrix(y_true, y_pred))
 	
-
 if 'A' in parts:
 	print('Part A')
 	y_true, y_pred = part_A()
@@ -190,7 +189,13 @@ if 'B' in parts:
 
 	for learning_rate in [0.0001, 0.001]:
 		for batch_size in [16, 8]:
-			for optimizer in [optim.Adam, optim.SGD]:
+			for optimizer in ['Adam', 'SGD']:
+			
+				optimizers: {
+					'SGD': lambda params: optim.SGD(params, lr=learning_rate, momentum=0.9),
+					'Adam': lambda params: optim.Adam(params, lr=learning_rate)
+				}
+				
 				part = f'Part B - learning rate {learning_rate}, batch_size {batch_size}, optimizer {optimizer}'
-				y_true, y_pred = part_B(learning_rate, batch_size, optimizer)
-				#print_results(part, y_true, y_pred)
+				y_true, y_pred = part_B(batch_size, optimizers[optimizer])
+				print_results(part, y_true, y_pred)
