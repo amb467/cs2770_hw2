@@ -100,6 +100,9 @@ def part_B(learning_rate, batch_size, optimizer):
 	num_ftrs = model.classifier[6].in_features
 	model.classifier[6] = nn.Linear(num_ftrs, len(class_names))
 
+	print(model.parameters())
+	
+	"""
 	num_epochs = 25
 	criterion = nn.CrossEntropyLoss()
 	optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
@@ -165,16 +168,12 @@ def part_B(learning_rate, batch_size, optimizer):
 		y_pred = np.concatenate((y_pred, preds.to('cpu')), axis=0)	
 		
 	return y_true, y_pred
+	"""
 
 def print_results(part, y_true, y_pred):
 	print(f"{part} Accuracy Score: {accuracy_score(y_true, y_pred)}")
 	print(f"{part} Confusion Matrix")
 	confusion_matrix(y_true, y_pred)
-	
-proc_func = {
-	'A': part_A,
-	'B': part_B
-}
 
 if 'A' in parts:
 	print('Part A')
@@ -188,4 +187,4 @@ if 'B' in parts:
 			for optimizer in [1]:
 				part = f'Part B - learning rate {learning_rate}, batch_size {batch_size}, optimizer {optimizer}'
 				y_true, y_pred = part_B(learning_rate, batch_size, optimizer)
-				print_results(part, y_true, y_pred)
+				#print_results(part, y_true, y_pred)
