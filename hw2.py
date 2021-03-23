@@ -17,6 +17,7 @@ from sklearn.metrics import confusion_matrix
 
 parser = argparse.ArgumentParser(description='CS2770 HW2')
 parser.add_argument('--parts', type=str, default='A,B', help='A comma-delimited list of the homework parts to process')
+parser.add_argument('--data_dir', type=pathlib.Path, help='The data set to use for training, testing, and validation')
 args = parser.parse_args()
 parts = args.parts.split(',')
 
