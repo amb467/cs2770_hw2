@@ -171,7 +171,7 @@ def part_B(batch_size, optimizer):
 		_, preds = torch.max(outputs, 1)
 		all_batchs_corrects += torch.sum(preds == labels.data)
 		epoch_acc = all_batchs_corrects.double() / dataset_sizes[phase]
-		y_true = np.concatenate((y_true, labels,to('cpu')), axis=0)
+		y_true = np.concatenate((y_true, labels.to('cpu')), axis=0)
 		y_pred = np.concatenate((y_pred, preds.to('cpu')), axis=0)	
 		
 	return y_true, y_pred
