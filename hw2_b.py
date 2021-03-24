@@ -71,7 +71,7 @@ for learning_rate in [0.0001, 0.001]:
 		'Adam': lambda params: optim.Adam(params, lr=learning_rate)
 	}
 	
-	for opt_label, optimizer in optimizers.values():
+	for opt_label, optimizer in optimizers.items():
 		for batch_size in [16, 8]:
 		
 			args.output.write(f'Part B - learning rate {learning_rate}, batch_size {batch_size}, optimizer {opt_label}')
