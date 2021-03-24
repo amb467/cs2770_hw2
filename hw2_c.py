@@ -71,14 +71,14 @@ def map_score(dataset, pred_bbs, gt_bbs):
 	
 	return float(map_sum)/float(num_classes[dataset])
 
-def get_test_results(model, phase):
+def get_test_results(model, dataloader):
 
 	model.eval()
-	coco = get_coco_api_from_dataset(data_loader[phase].dataset)
+	coco = get_coco_api_from_dataset(data_loader.dataset)
 	iou_types = ["bbox"]
 	coco_evaluator = CocoEvaluator(coco, iou_types)
 	
-	for images, targets in dataloaders[phase]:
+	for images, targets in dataloader:
 		images = [image.to(device) for image in images]
 		outputs = model(images).to('cpu')
 		res = {target["image_id"].item(): output for target, output in zip(targets, outputs)}
@@ -124,7 +124,7 @@ def make_model(dataset):
 		scheduler.step()
 
 		print(f'Part C {dataset} Epoch {epoch+1} out of {args.epochs}: Validation')
-		get_test_results(model, 'val')
+		get_test_results(model, dataloaders['val'])
 		
 	
 
