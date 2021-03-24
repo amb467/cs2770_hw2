@@ -58,8 +58,8 @@ def get_test_results(model, phase):
 		labels = labels.to(device)
 		outputs = model(inputs)
 		_, preds = torch.max(outputs, 1)
-		y_true.append(labels.to('cpu'))
-		y_pred.append(preds.to('cpu'))
+		y_true.extend(labels.to('cpu'))
+		y_pred.extend(preds.to('cpu'))
 		
 	return y_true, y_pred
 
