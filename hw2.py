@@ -115,6 +115,7 @@ def part_B(batch_size, optimizer):
 	for epoch in range(num_epochs):
 		print(f'Epoch {epoch} out of {num_epochs}')
 		for phase in ['train', 'test']:
+			print(f'Phase is {phase}')
 			if phase == 'train':
 				model.train()
 			else:
@@ -122,8 +123,11 @@ def part_B(batch_size, optimizer):
 
 			all_batchs_loss = 0
 			all_batchs_corrects = 0
+			batch_count = 0
 			
 			for inputs, labels in dataloaders[phase]:
+				batch_count += 1
+				print(f'On batch {batch_count}')
 				inputs = inputs.to(device)
 				labels = labels.to(device)
 
