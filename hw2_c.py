@@ -80,7 +80,7 @@ def get_test_results(model, dataloader):
 	
 	for images, targets in dataloader:
 		images = [image.to(device) for image in images]
-		outputs = model(images).to('cpu')
+		outputs = [item.to('cpu') for item in model(images)]
 		res = {target["image_id"].item(): output for target, output in zip(targets, outputs)}
 		coco_evaluator.update(res)
 	
