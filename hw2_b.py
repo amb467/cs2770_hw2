@@ -52,14 +52,12 @@ def get_test_results(model, phase):
 	
 	y_true = []
 	y_pred = []
-	all_batchs_corrects = 0
 	
 	for inputs, labels in dataloaders[phase]:
 		inputs = inputs.to(device)
-		labels = labels.to(device)
 		outputs = model(inputs)
 		_, preds = torch.max(outputs, 1)
-		y_true.extend(labels.to('cpu'))
+		y_true.extend(labels)
 		y_pred.extend(preds.to('cpu'))
 		
 	return y_true, y_pred
@@ -75,7 +73,8 @@ for learning_rate in [0.0001, 0.001]:
 	for opt_label, opt_func in optimizers.items():
 		for batch_size in [16, 8]:
 		
-			args.output.write(f'Part B - learning rate {learning_rate}, batch_size {batch_size}, optimizer {opt_label}')
+			print(f'Part B - learning rate {learning_rate}, batch_size {batch_size}, optimizer {opt_label}')
+			args.output.write(f'Part B - learning rate {learning_rate}, batch_size {batch_size}, optimizer {opt_label}\n')
 			dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=4) for x in ['train', 'val' , 'test']}
 
 			model = models.vgg16(pretrained=True)
@@ -102,7 +101,6 @@ for learning_rate in [0.0001, 0.001]:
 					optimizer.zero_grad()
 			
 					outputs = model(inputs)
-					_, preds = torch.max(outputs, 1)
 					loss = criterion(outputs, labels)
 					loss.backward()
 					optimizer.step()
@@ -124,6 +122,7 @@ for learning_rate in [0.0001, 0.001]:
 			model = model.to(device)
 			model.load_state_dict(torch.load('part_b_best_model_weight.pth'))
 			y_true, y_pred = get_test_results(model, 'train')
-			args.output.write(f"Part B Accuracy Score: {accuracy_score(y_true, y_pred)}")
-			args.output.write(f"Part B Confusion Matrix")
+			args.output.write(f"Part B Accuracy Score: {accuracy_score(y_true, y_pred)}\n")
+			args.output.write(f"Part B Confusion Matrix\n")
 			args.output.write(np.array2string(confusion_matrix(y_true, y_pred)))
+			args.output.write("\n\n")

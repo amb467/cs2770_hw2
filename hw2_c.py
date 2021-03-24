@@ -15,6 +15,7 @@ parser.add_argument('--epochs', type=int, default=25, help='The number of epochs
 parser.add_argument('--pascal_dir', type=pathlib.Path, required=True, help='Path to the PASCAL data set')
 parser.add_argument('--penn_fudan_dir', type=pathlib.Path, required=True, help='Path to the PennFudan data set')
 parser.add_argument('--iou_threshold', type=float, default=0.5, help='The threshold to use for mAP calculation')
+parser.add_argument('--output', nargs='?', type=argparse.FileType('w'), default='-', help='The output file where results will go')
 args = parser.parse_args()
 
 dataset_funcs = {
@@ -70,11 +71,30 @@ def map_score(dataset, pred_bbs, gt_bbs):
 	
 	return float(map_sum)/float(num_classes[dataset])
 
+def get_test_results(model, phase):
+
+	model.eval()
+	coco = get_coco_api_from_dataset(data_loader[phase].dataset)
+	iou_types = ["bbox"]
+	coco_evaluator = CocoEvaluator(coco, iou_types)
+	
+	for images, targets in dataloaders[phase]:
+		images = [image.to(device) for image in images]
+		outputs = model(images).to('cpu')
+		res = {target["image_id"].item(): output for target, output in zip(targets, outputs)}
+		coco_evaluator.update(res)
+	
+	coco_evaluator.synchronize_between_processes()
+	coco_evaluator.accumulate()
+	coco_evaluator.summarize()
+	
+	print("Eval:")
+	print(coco_evaluator.coco_eval['bbox'].stats[0])
+		
 # Create and train the model
 def make_model(dataset):
 
 	image_datasets = {x: dataset_funcs[dataset](x) for x in ['train', 'val', 'test']}
-	dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val', 'test']}
 	dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=4, shuffle=True, num_workers=4, collate_fn=utils.collate_fn) for x in ['train', 'val' , 'test']}
 	model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
 	num_ftrs = model.roi_heads.box_predictor.cls_score.in_features
@@ -87,38 +107,28 @@ def make_model(dataset):
 	best_model_wts = copy.deepcopy(model.state_dict())
 	best_map = 0.0
 	
-	print("Part C: Training and Validing {dataset}")
 	for epoch in range(args.epochs):
-		print(f'{dataset} Epoch {epoch+1} out of {args.epochs}')
-		for phase in ['train', 'val']:
-			print(f'Phase is {phase}')
-			if phase == 'train':
-				model.train()
-			else:
-				model.eval()
-
-			all_batchs_loss = 0
-			all_batchs_corrects = 0
-			
-			for images, targets in dataloaders[phase]:
-				images = [image.to(device) for image in images]
-				targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-				optimizer.zero_grad()
-				loss_dict = model(images, targets)
-				loss = sum(loss_dict.values())
-				
-				if phase == 'train':
-					loss.backward()
-					optimizer.step()
-			
-			if phase == 'train':
-				scheduler.step()
+		print(f'Part C {dataset} Epoch {epoch+1} out of {args.epochs}: Training')
 		
-				
-	return model
+		model.train()
+
+		for images, targets in dataloaders['train']:
+			images = [image.to(device) for image in images]
+			targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+			optimizer.zero_grad()
+			loss_dict = model(images, targets)
+			loss = sum(loss_dict.values())
+			loss.backward()
+			optimizer.step()
+		
+		scheduler.step()
+
+		print(f'Part C {dataset} Epoch {epoch+1} out of {args.epochs}: Validation')
+		get_test_results(model, 'val')
+		
 	
 
-models = [make_model(x) for x in ['PASCAL', 'PF']]
+[make_model(x) for x in ['PASCAL', 'PF']]
 
 
 
