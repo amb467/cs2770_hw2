@@ -151,19 +151,19 @@ def part_B(batch_size, optimizer):
 			if phase == 'val' and epoch_acc > best_acc:
 				best_acc = epoch_acc
 				best_model_wts = copy.deepcopy(model.state_dict())
-				torch.save(best_model_wts , 'best_model_weight.pth')
+				torch.save(best_model_wts , 'part_b_best_model_weight.pth')
 				
 	print('Part B: Testing CNN')
 	model = models.vgg16()
 	num_ftrs = model.classifier[6].in_features
 	model.classifier[6] = nn.Linear(num_ftrs, 20)
 	model = model.to(device)
-	model.load_state_dict(torch.load('best_model_weight.pth'))
+	model.load_state_dict(torch.load('part_b_best_model_weight.pth'))
 	model.eval()
 	phase = 'test'
 	
-	y_true = {}
-	y_pred = {}
+	y_true = []
+	y_pred = []
 	for inputs, labels in dataloaders[phase]:
 		inputs = inputs.to(device)
 		labels = labels.to(device)
@@ -171,8 +171,8 @@ def part_B(batch_size, optimizer):
 		_, preds = torch.max(outputs, 1)
 		all_batchs_corrects += torch.sum(preds == labels.data)
 		epoch_acc = all_batchs_corrects.double() / dataset_sizes[phase]
-		y_true = np.concatenate((y_true, labels.to('cpu')), axis=0)
-		y_pred = np.concatenate((y_pred, preds.to('cpu')), axis=0)	
+		y_true = y_true.append(labels.to('cpu'))
+		y_pred = y_pred.append(preds.to('cpu'))
 		
 	return y_true, y_pred
 
