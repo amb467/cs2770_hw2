@@ -113,7 +113,7 @@ def part_B(batch_size, optimizer):
 	best_acc = 0.0
 
 	for epoch in range(args.epochs):
-		print(f'Epoch {epoch+1} out of {num_epochs}')
+		print(f'Epoch {epoch+1} out of {args.epochs}')
 		for phase in ['train', 'val']:
 			print(f'Phase is {phase}')
 			if phase == 'train':

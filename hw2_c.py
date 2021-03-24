@@ -89,7 +89,7 @@ def make_model(dataset):
 	
 	print("Part C: Training and Validing {dataset}")
 	for epoch in range(args.epochs):
-		print(f'{dataset} Epoch {epoch+1} out of {num_epochs}')
+		print(f'{dataset} Epoch {epoch+1} out of {args.epochs}')
 		for phase in ['train', 'val']:
 			print(f'Phase is {phase}')
 			if phase == 'train':
