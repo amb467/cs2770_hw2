@@ -20,7 +20,6 @@ parser.add_argument('--epochs', type=int, default=25, help='The number of epochs
 parser.add_argument('--data_dir', type=pathlib.Path, help='The data set to use for training, testing, and validation')
 parser.add_argument('--output', nargs='?', type=argparse.FileType('w'), default='-', help='The output file where results will go')
 args = parser.parse_args()
-parts = args.parts.split(',')
 
 device = 'cuda:0' if torch.cuda.is_available() else "cpu"
 print(f'Device is {device}')

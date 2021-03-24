@@ -18,7 +18,6 @@ from sklearn.metrics import confusion_matrix
 parser = argparse.ArgumentParser(description='CS2770 HW2')
 parser.add_argument('--data_dir', type=pathlib.Path, help='The data set to use for training, testing, and validation')
 args = parser.parse_args()
-parts = args.parts.split(',')
 
 device = 'cuda:0' if torch.cuda.is_available() else "cpu"
 print(f'Device is {device}')
