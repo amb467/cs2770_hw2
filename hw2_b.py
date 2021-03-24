@@ -24,9 +24,6 @@ args = parser.parse_args()
 device = 'cuda:0' if torch.cuda.is_available() else "cpu"
 print(f'Device is {device}')
 
-image_datasets = {x: datasets.ImageFolder(os.path.join(args.data_dir, x), data_transforms[x]) for x in ['train', 'val', 'test']}
-class_names = image_datasets['train'].classes
-
 data_transforms = {
 	'train': transforms.Compose([
 		transforms.Resize((224,224)),
@@ -44,6 +41,9 @@ data_transforms = {
 		transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 	]),
 }
+
+image_datasets = {x: datasets.ImageFolder(os.path.join(args.data_dir, x), data_transforms[x]) for x in ['train', 'val', 'test']}
+class_names = image_datasets['train'].classes
 
 def get_test_results(model, phase):
 

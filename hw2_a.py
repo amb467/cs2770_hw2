@@ -17,6 +17,7 @@ from sklearn.metrics import confusion_matrix
 
 parser = argparse.ArgumentParser(description='CS2770 HW2')
 parser.add_argument('--data_dir', type=pathlib.Path, help='The data set to use for training, testing, and validation')
+parser.add_argument('--output', nargs='?', type=argparse.FileType('w'), default='-', help='The output file where results will go')
 args = parser.parse_args()
 
 device = 'cuda:0' if torch.cuda.is_available() else "cpu"
@@ -68,7 +69,6 @@ image_features = {}
 image_labels = {}
 for phase in ['train', 'test']:
 	for inputs, labels in dataloaders[phase]:
-		print(f'\tExtracting features for inputs {inputs} and labels {labels}')
 		inputs = inputs.to(device)
 		model_prediction = model(inputs)
 		model_prediction_numpy = model_prediction.cpu().detach().numpy()
@@ -87,7 +87,7 @@ print('Part A: Testing SVM')
 
 y_true = image_labels['test']
 y_pred = clf.predict(image_features['test'])
-print(f"Part A Accuracy Score: {accuracy_score(y_true, y_pred)}")
-print("Part A Confusion Matrix:")
-print(confusion_matrix(y_true, y_pred))
+args.output.write(f"Part A Accuracy Score: {accuracy_score(y_true, y_pred)}")
+args.output.write("Part A Confusion Matrix:")
+args.output.write(confusion_matrix(y_true, y_pred))
 
