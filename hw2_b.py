@@ -100,12 +100,11 @@ for learning_rate in [0.0001, 0.001]:
 		
 					optimizer.zero_grad()
 			
-					with torch.set_grad_enabled(phase == 'train'):
-						outputs = model(inputs)
-						_, preds = torch.max(outputs, 1)
-						loss = criterion(outputs, labels)
-						loss.backward()
-						optimizer.step()
+					outputs = model(inputs)
+					_, preds = torch.max(outputs, 1)
+					loss = criterion(outputs, labels)
+					loss.backward()
+					optimizer.step()
 
 				scheduler.step()
 		
