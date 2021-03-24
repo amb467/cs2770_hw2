@@ -8,6 +8,7 @@ import torchvision
 from torchvision import datasets, models, transforms
 import time
 import os
+import numpy as np
 import copy
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
@@ -125,4 +126,4 @@ for learning_rate in [0.0001, 0.001]:
 			y_true, y_pred = get_test_results(model, 'train')
 			args.output.write(f"Part B Accuracy Score: {accuracy_score(y_true, y_pred)}")
 			args.output.write(f"Part B Confusion Matrix")
-			args.output.write(confusion_matrix(y_true, y_pred))
+			args.output.write(np.array2string(confusion_matrix(y_true, y_pred)))
