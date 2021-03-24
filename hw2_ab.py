@@ -105,7 +105,6 @@ def part_B(batch_size, optimizer):
 	num_ftrs = model.classifier[6].in_features
 	model.classifier[6] = nn.Linear(num_ftrs, len(class_names))
 
-	num_epochs = args.epochs
 	criterion = nn.CrossEntropyLoss()
 	optimizer = optimizer(model.parameters())
 	scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
@@ -113,8 +112,8 @@ def part_B(batch_size, optimizer):
 	best_model_wts = copy.deepcopy(model.state_dict())
 	best_acc = 0.0
 
-	for epoch in range(num_epochs):
-		print(f'Epoch {epoch} out of {num_epochs}')
+	for epoch in range(args.epochs):
+		print(f'Epoch {epoch+1} out of {num_epochs}')
 		for phase in ['train', 'val']:
 			print(f'Phase is {phase}')
 			if phase == 'train':
@@ -172,8 +171,8 @@ def part_B(batch_size, optimizer):
 		_, preds = torch.max(outputs, 1)
 		all_batchs_corrects += torch.sum(preds == labels.data)
 		epoch_acc = all_batchs_corrects.double() / dataset_sizes[phase]
-		y_true = y_true.append(labels.to('cpu'))
-		y_pred = y_pred.append(preds.to('cpu'))
+		y_true.append(labels.to('cpu'))
+		y_pred.append(preds.to('cpu'))
 		
 	return y_true, y_pred
 
