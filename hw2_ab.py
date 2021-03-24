@@ -16,6 +16,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 
 parser = argparse.ArgumentParser(description='CS2770 HW2')
+parser.add_argument('--epochs', type=int, default=25, help='The number of epochs')
 parser.add_argument('--parts', type=str, default='A,B', help='A comma-delimited list of the homework parts to process')
 parser.add_argument('--data_dir', type=pathlib.Path, help='The data set to use for training, testing, and validation')
 parser.add_argument('--output', nargs='?', type=argparse.FileType('w'), default='-', help='The output file where results will go')
@@ -104,7 +105,7 @@ def part_B(batch_size, optimizer):
 	num_ftrs = model.classifier[6].in_features
 	model.classifier[6] = nn.Linear(num_ftrs, len(class_names))
 
-	num_epochs = 25
+	num_epochs = args.epochs
 	criterion = nn.CrossEntropyLoss()
 	optimizer = optimizer(model.parameters())
 	scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
@@ -142,8 +143,8 @@ def part_B(batch_size, optimizer):
 				all_batchs_loss += loss.item() * inputs.size(0)
 				all_batchs_corrects += torch.sum(preds == labels.data)
 		
-				if phase == 'train':
-					scheduler.step()
+			if phase == 'train':
+				scheduler.step()
 			
 			epoch_loss = all_batchs_loss / dataset_sizes[phase]
 			epoch_acc = all_batchs_corrects.double() / dataset_sizes[phase]
