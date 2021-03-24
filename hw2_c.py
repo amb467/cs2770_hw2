@@ -104,7 +104,7 @@ def make_model(dataset):
 				images = [image.to(device) for image in images]
 				targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 				optimizer.zero_grad()
- 				loss_dict = model(images, targets)
+				loss_dict = model(images, targets)
 				loss = sum(loss_dict.values())
 				
 				if phase == 'train':
