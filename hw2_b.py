@@ -72,7 +72,7 @@ for learning_rate in [0.0001, 0.001]:
 		'Adam': lambda params: optim.Adam(params, lr=learning_rate)
 	}
 	
-	for opt_label, optimizer in optimizers.items():
+	for opt_label, opt_func in optimizers.items():
 		for batch_size in [16, 8]:
 		
 			args.output.write(f'Part B - learning rate {learning_rate}, batch_size {batch_size}, optimizer {opt_label}')
@@ -84,7 +84,7 @@ for learning_rate in [0.0001, 0.001]:
 			model = model.to(device)
 	
 			criterion = nn.CrossEntropyLoss()
-			optimizer = optimizer(model.parameters())
+			optimizer = opt_func(model.parameters())
 			scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
 			best_model_wts = copy.deepcopy(model.state_dict())
