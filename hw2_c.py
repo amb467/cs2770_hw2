@@ -54,7 +54,7 @@ def map_score_for_class(pred_bbs, gt_bbs):
 		isTP = False
 		for gt_bb in gt_bbs:
 			iou = get_iou(pred_bb, gt_bb)
-			if iou >= args.iou_threshold
+			if iou >= args.iou_threshold:
 				isTP = True
 				break
 		
