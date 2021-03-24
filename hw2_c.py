@@ -74,7 +74,7 @@ def map_score(dataset, pred_bbs, gt_bbs):
 def get_test_results(model, dataloader):
 
 	model.eval()
-	coco = get_coco_api_from_dataset(data_loader.dataset)
+	coco = get_coco_api_from_dataset(dataloader.dataset)
 	iou_types = ["bbox"]
 	coco_evaluator = CocoEvaluator(coco, iou_types)
 	
