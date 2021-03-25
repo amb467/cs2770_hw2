@@ -1,4 +1,4 @@
-import argparse, pathlib
+import argparse, pathlib, numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -89,5 +89,5 @@ y_true = image_labels['test']
 y_pred = clf.predict(image_features['test'])
 args.output.write(f"Part A Accuracy Score: {accuracy_score(y_true, y_pred)}")
 args.output.write("Part A Confusion Matrix:")
-args.output.write(confusion_matrix(y_true, y_pred))
+args.output.write(np.array2string(confusion_matrix(y_true, y_pred)))
 
