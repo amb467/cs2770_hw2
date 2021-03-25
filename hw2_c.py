@@ -16,8 +16,20 @@ parser.add_argument('--pascal_dir', type=pathlib.Path, required=True, help='Path
 parser.add_argument('--penn_fudan_dir', type=pathlib.Path, required=True, help='Path to the PennFudan data set')
 parser.add_argument('--iou_threshold', type=float, default=0.5, help='The threshold to use for mAP calculation')
 parser.add_argument('--output', nargs='?', type=argparse.FileType('w'), default='-', help='The output file where results will go')
+parser.add_argument('--lr', type=float, default=.001, help='The learning rate')
+parser.add_argument('--batch_size', type=int, default=4, help='The batch size')
+parser.add_argument('--optimizer', type=str, default='SGD', help='The optimizer - SGD or Adam')
 args = parser.parse_args()
 
+optimizers = {
+	'SGD': lambda params: optim.SGD(params, lr=args.lr, momentum=0.9),
+	'Adam': lambda params: optim.Adam(params, lr=args.lr,)
+}
+
+if args.optimizer not in optimizers:
+	print("Optimizer must be 'SGD' or 'Adam'")
+	exit
+	
 dataset_funcs = {
 	'PASCAL': lambda x: PASCALDataset(os.path.join(args.pascal_dir, x)),
 	'PF': lambda x: PennFudanDataset(os.path.join(args.penn_fudan_dir, x))
@@ -51,7 +63,10 @@ def map_score(dataset, pred_bbs, gt_bbs):
 	tp = np.zeros(num_classes[dataset]).tolist()
 	fp = np.zeros(num_classes[dataset]).tolist()
 	
-	for pred_bb_item, gt_bb_item in zip(pred_bbs, gt_bbs):
+	for gt_bb_item in gt_bbs:
+		image_id = gt_bb_item['image_id'].item()
+		pred_bb_item = pred_bbs[image_id]
+		
 		pred_boxes = pred_bb_item['boxes'].tolist()
 		pred_labels = pred_bb_item['labels'].tolist()
 		gt_boxes = gt_bb_item['boxes'].tolist()
@@ -85,13 +100,14 @@ def map_score(dataset, pred_bbs, gt_bbs):
 	
 	return sum(maps)/float(len(maps))
 
-def get_test_results(model, dataloader):
+def get_test_results(model, dataset, dataloader):
 
 	model.eval()
 	coco = get_coco_api_from_dataset(dataloader.dataset)
 	iou_types = ["bbox"]
 	coco_evaluator = CocoEvaluator(coco, iou_types)
 	all_targets = []
+	all_res = {}
 	
 	for images, targets in dataloader:
 		images = [image.to(device) for image in images]
@@ -99,25 +115,29 @@ def get_test_results(model, dataloader):
 		res = {target["image_id"].item(): output for target, output in zip(targets, outputs)}
 		coco_evaluator.update(res)
 		all_targets.extend(list(targets))
+		all_res.update(res)
+	
 	
 	coco_evaluator.synchronize_between_processes()
 	coco_evaluator.accumulate()
 	coco_evaluator.summarize()
 	
-	print("Eval:")
-	print(coco_evaluator.coco_eval['bbox'].stats[0])
+	coco_map_score = coco_evaluator.coco_eval['bbox'].stats[0]
+	map_score = map_score(dataset, all_res, all_targets)
+	print("Coco Evaluator: {coco_map_score}; my calculation: {map_score}")
+	return map_score
 		
 # Create and train the model
 def make_model(dataset):
 
 	image_datasets = {x: dataset_funcs[dataset](x) for x in ['train', 'val', 'test']}
-	dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=4, shuffle=True, num_workers=4, collate_fn=utils.collate_fn) for x in ['train', 'val' , 'test']}
+	dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=args.batch_size, shuffle=True, num_workers=4, collate_fn=utils.collate_fn) for x in ['train', 'val' , 'test']}
 	model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
 	num_ftrs = model.roi_heads.box_predictor.cls_score.in_features
 	model.roi_heads.box_predictor = FastRCNNPredictor(num_ftrs, num_classes[dataset])
 	model = model.to(device)
 	
-	optimizer = optim.SGD(model.parameters(), lr=.001, momentum=0.9)
+	optimizer = optimizers[args.optimizer](model.parameters())
 	scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 	
 	best_model_wts = copy.deepcopy(model.state_dict())
@@ -140,10 +160,21 @@ def make_model(dataset):
 		scheduler.step()
 
 		print(f'Part C {dataset} Epoch {epoch+1} out of {args.epochs}: Validation')
-		get_test_results(model, dataloaders['val'])
-		
+		epoch_map = get_test_results(model, dataset, dataloaders['val'])
+		if epoch_map > best_map:
+			best_map = epoch_map
+			best_model_wts = copy.deepcopy(model.state_dict())
+			torch.save(best_model_wts , 'part_c_best_model_weight.pth')
 	
-
+	print('Part C: {dataset} Testing')
+	model = torchvision.models.detection.fasterrcnn_resnet50_fpn()
+	num_ftrs = model.roi_heads.box_predictor.cls_score.in_features
+	model.roi_heads.box_predictor = FastRCNNPredictor(num_ftrs, num_classes[dataset])
+	model = model.to(device)
+	model.load_state_dict(torch.load('part_c_best_model_weight.pth'))
+	test_map = get_test_results(model, dataset, dataloaders['train'])
+	print(f'Part C {dataset} mAP: {test_map}')
+		
 [make_model(x) for x in ['PASCAL', 'PF']]
 
 
