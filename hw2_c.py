@@ -33,43 +33,57 @@ print(f'Device is {device}')
 
 def get_iou(bb1, bb2):
 
-	area1 = abs(bb1[0] - bb1[2]) * abs(bb1[1] - bb1[3])
-	area2 = abs(bb2[0] - bb2[2]) * abs(bb2[1] - bb2[3])
-			
-	x_overlap = max(0.0, min(abs(bbox1[0] - bbox2[2]), abs(bbox1[2] - bbox2[0])))
-	y_overlap = max(0.0, min(abs(bbox1[1] - bbox2[3]), abs(bbox1[3] - bbox2[1])))
+	bb1 = [min(bb1[0], bb1[2]), min(bb1[1], bb1[3]), max(bb1[0], bb1[2]), max(bb1[1], bb1[3])]
+	bb2 = [min(bb2[0], bb2[2]), min(bb2[1], bb2[3]), max(bb2[0], bb2[2]), max(bb2[1], bb2[3])]
+	
+	area1 = (bb1[2] - bb1[0]) * (bb1[3] - bb1[1])
+	area2 = (bb2[2] - bb2[0]) * (bb2[3] - bb2[1])
+	
+	x_overlap = max(0.0, min(abs(bb1[0] - bb2[2]), abs(bb1[2] - bb2[0])))
+	y_overlap = max(0.0, min(abs(bb1[1] - bb2[3]), abs(bb1[3] - bb2[1])))
 	intersection_area = x_overlap * y_overlap
-	
 	union_area = area1 + area2 - intersection_area
-	
 	return float(intersection_area)/float(union_area)
 	
-def map_score_for_class(pred_bbs, gt_bbs):
-
-	if gt_bbs is None or len(gt_bbs) == 0:
-		return 0.0
-	
-	tps = 0
-
-	for pred_bb in pred_bbs:
-		isTP = False
-		for gt_bb in gt_bbs:
-			iou = get_iou(pred_bb, gt_bb)
-			if iou >= args.iou_threshold:
-				isTP = True
-				break
-		
-		tps = tps + 1 if isTP else tps
-	
-	return float(tps)/float(len(pred_bbs))
-
+# {'boxes': tensor([[ 31.,  19., 461., 474.]]), 'labels': tensor([3]), 'image_id': tensor([86]), 'area': tensor([195650.]), 'iscrowd': tensor([0])}
 def map_score(dataset, pred_bbs, gt_bbs):
 
-	map_sum = 0
-	for c in range(num_classes[dataset]):
-		map_sum += map_score_for_class(pred_bbs[c], gt_bbs[c])
+	tp = np.zeros(num_classes[dataset]).tolist()
+	fp = np.zeros(num_classes[dataset]).tolist()
 	
-	return float(map_sum)/float(num_classes[dataset])
+	for pred_bb_item, gt_bb_item in zip(pred_bbs, gt_bbs):
+		pred_boxes = pred_bb_item['boxes'].tolist()
+		pred_labels = pred_bb_item['labels'].tolist()
+		gt_boxes = gt_bb_item['boxes'].tolist()
+		gt_labels = gt_bb_item['labels'].tolist()
+		
+		gts_by_label = defaultdict(list)
+		for bbox, label in zip(gt_boxes, gt_labels):
+			gts_by_label[label].append(bbox)
+		
+		for pred_bbox, label in zip(pred_boxes, pred_labels):
+			if label in gts_by_label:
+				isTP = False
+				for gt_bbox in gts_by_label[label]:
+					iou = get_iou(pred_bbox, gt_bbox)
+					if iou >= args.iou_threshold:
+						isTP = True
+						tp[label] += 1
+						break
+				
+				fp[label] += 0 if isTP else 1
+					
+			else:
+				fp[label] += 1	
+	
+	maps = []
+	for c in range(num_classes[dataset]):
+		total = float(tp[c] + fp[c])
+		
+		if total > 0.0:
+			maps.append(float(tp[c])/total)
+	
+	return sum(maps)/float(len(maps))
 
 def get_test_results(model, dataloader):
 
@@ -77,12 +91,14 @@ def get_test_results(model, dataloader):
 	coco = get_coco_api_from_dataset(dataloader.dataset)
 	iou_types = ["bbox"]
 	coco_evaluator = CocoEvaluator(coco, iou_types)
+	all_targets = []
 	
 	for images, targets in dataloader:
 		images = [image.to(device) for image in images]
-		outputs = [item.to('cpu') for item in model(images)]
+		outputs = [{k: v.to(device) for k, v in t.items()} for t in model(images)]
 		res = {target["image_id"].item(): output for target, output in zip(targets, outputs)}
 		coco_evaluator.update(res)
+		all_targets.extend(list(targets))
 	
 	coco_evaluator.synchronize_between_processes()
 	coco_evaluator.accumulate()
