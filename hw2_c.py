@@ -57,7 +57,6 @@ def get_iou(bb1, bb2):
 	union_area = area1 + area2 - intersection_area
 	return float(intersection_area)/float(union_area)
 	
-# {'boxes': tensor([[ 31.,  19., 461., 474.]]), 'labels': tensor([3]), 'image_id': tensor([86]), 'area': tensor([195650.]), 'iscrowd': tensor([0])}
 def map_score(dataset, pred_bbs, gt_bbs):
 
 	tp = np.zeros(num_classes[dataset]).tolist()

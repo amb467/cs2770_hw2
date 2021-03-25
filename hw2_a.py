@@ -64,7 +64,7 @@ dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=8, s
 model = VGG16_Feature_Extraction()
 model = model.to(device)
 
-print('Part A: Extracting Features')
+print('Extracting Features')
 image_features = {}
 image_labels = {}
 for phase in ['train', 'test']:
@@ -79,15 +79,15 @@ for phase in ['train', 'test']:
 			image_features[phase] = np.concatenate((image_features[phase], model_prediction_numpy), axis=0)
 			image_labels[phase] = np.concatenate((image_labels[phase], labels.numpy()), axis=0)	
 
-print('Part A: Training SVM')
+print('Training SVM')
 clf = make_pipeline(StandardScaler(), LinearSVC(random_state=0))
 clf.fit(image_features['train'], image_labels['train'])
 
-print('Part A: Testing SVM')
+print('Testing SVM')
 
 y_true = image_labels['test']
 y_pred = clf.predict(image_features['test'])
-args.output.write(f"Part A Accuracy Score: {accuracy_score(y_true, y_pred)}")
-args.output.write("Part A Confusion Matrix:")
+args.output.write(f"Part A Accuracy Score: {accuracy_score(y_true, y_pred)}\n")
+args.output.write("Part A Confusion Matrix:\n")
 args.output.write(np.array2string(confusion_matrix(y_true, y_pred)))
 
